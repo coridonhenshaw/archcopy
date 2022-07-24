@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+option go_package = "proto.local/archcopyRPC";
+
+package archcopyRPC;
+
+service Slave {
+    rpc Connect (ConnectInquire) returns (ConnectResponse) {}
+    rpc SweepTree (SweepPackage) returns (stream SweepPackageReply) {}
+    rpc CheckFiles (FilePackage) returns (FilePackageReply) {}
+    rpc WriteFile (stream File) returns (WriteFileStatus) {}
+    rpc ReadHash (Filename) returns (Hash) {}
+    rpc ReadFile (Filename) returns (stream File) {}
+    rpc RenameFile (RenamePackage) returns (Status) {}
+    rpc Disconnect (SessionKey) returns (Status) {}
+}
+
+message ConnectInquire {
+    bytes ClientID = 1;
+    int32 Phase = 2;
+    bytes OfferNonce = 3;
+    bytes OfferSignature = 4;
+    bytes ChallengeResponse = 5;
+}
+
+message ConnectResponse {
+    int32 Phase = 1;
+    bytes NonceSignature = 2;
+    bytes Challenge = 3;
+    bytes ChallengeSignature = 4;
+    bytes Key = 5;
+}
+
+message SessionKey {
+    bytes Key = 1;
+    bytes Signature = 2;
+}
+
+message SweepPackage {
+    bytes SessionKey = 1;
+    bytes Signature = 2;
+    bytes StartDirectory = 3;
+    bool FollowSymlinks = 4;
+    bool GenerateHashes = 5;
+}
+
+message SweepPackageReply {
+    bytes Directory = 1;
+    repeated SweepPackageFile Files = 2;
+    bytes Signature = 3;
+}
+
+message SweepPackageFile {
+    bytes Filename = 1;
+    int64 Size = 2;
+    bytes Hash = 3;
+}
+
+message FilePackage {
+    SessionKey SessionKey = 1;
+    bytes Signature = 2;
+    repeated bytes Filenames = 3;
+}
+
+message FilePackageReply {
+    bytes Signature = 1;
+    map<uint32, uint64> Existing = 2;
+}
+
+message File {
+    bytes Data = 1;
+    bool Compressed = 2;
+    int64 Zero = 3;
+}
+
+message WriteFileStatus {
+    bytes Signature = 1;
+    int32 Status = 2;
+    bytes ReceivedHash = 3;
+    bytes ReadbackHash = 4;
+    bytes Error = 5;
+}
+
+message Status {
+    bytes Signature = 1;
+    int32 Status = 2;
+    bytes Variant = 3;
+}
+
+message Filename {
+    bytes SessionKey = 1;
+    bytes Signature = 2;
+    bytes Filename = 3;
+    int64 Offset = 4;
+}
+
+message Hash {
+    bytes Signature = 1;
+    bytes Hash = 2;
+}
+
+message RenamePackage {
+    bytes SessionKey = 1;
+    bytes Signature = 2;
+    bytes Source = 3;
+    bytes Destination = 4;
+}
